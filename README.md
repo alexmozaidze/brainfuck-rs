@@ -11,6 +11,7 @@ This implementation of Brainfuck complies with the spec that can be found [here]
 - *fast*: doesn't use recursion internally
 - *safe*: no `unsafe` keyword
 - *configurable tape size*: 30000 by default
+- *interactive/piped input support*
 
 ## Bugs
 
