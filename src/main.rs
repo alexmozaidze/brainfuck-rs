@@ -30,7 +30,7 @@ fn read_until_eof(handle: &Stdin, buffer: &mut String) -> Result<()> {
     Ok(())
 }
 
-fn get_program(matches: ArgMatches) -> Result<String> {
+fn get_program(matches: &ArgMatches) -> Result<String> {
     match matches.get_one::<PathBuf>("input") {
         Some(file_path) => {
             let code = match fs::read_to_string(file_path) {
@@ -72,6 +72,15 @@ fn main() -> Result<()> {
                 .value_parser(value_parser!(usize))
                 .default_value("30000"),
         )
+        .arg(
+            Arg::new("should-flush")
+                .short('f')
+                .long("flush")
+                .value_name("BOOL")
+                .help("Wether to flush the output or not")
+                .value_parser(value_parser!(bool))
+                .default_value("true"),
+        )
         .get_matches();
 
     let mut bf = Brainfuck {
@@ -79,7 +88,7 @@ fn main() -> Result<()> {
         tape: vec![Wrapping(0); *matches.get_one::<usize>("tape-length").unwrap()],
     };
 
-    let code: String = get_program(matches)?;
+    let code: String = get_program(&matches)?;
     if code.trim().is_empty() {
         return Ok(());
     }
@@ -93,8 +102,10 @@ fn main() -> Result<()> {
 
     drop(tokens);
 
+    let should_flush = *matches.get_one::<bool>("should-flush").unwrap();
+
     for instruction in instructions {
-        Instruction::run(&mut bf, &instruction);
+        Instruction::run(&mut bf, &instruction, should_flush);
     }
 
     println!();

@@ -108,7 +108,7 @@ impl Instruction {
         Ok(instructions)
     }
 
-    pub fn run(bf: &mut Brainfuck, instruction: &Instruction) {
+    pub fn run(bf: &mut Brainfuck, instruction: &Instruction, should_flush: bool) {
         let mut stdin = io::stdin();
         let mut stdout = io::stdout();
 
@@ -135,10 +135,15 @@ impl Instruction {
 
                     stdout.write_all(&[output]).unwrap();
 
-                    // TODO: make flush configurable at runtime
-                    stdout.flush().unwrap();
+                    if should_flush {
+                        stdout.flush().unwrap();
+                    }
                 }
                 Instruction::Read => {
+                    if !should_flush {
+                        stdout.flush().unwrap();
+                    }
+
                     let mut input_char: [u8; 1] = [0];
 
                     let _ = stdin.read_exact(&mut input_char);
