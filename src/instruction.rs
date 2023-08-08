@@ -28,51 +28,45 @@ impl From<Token> for Instruction {
             Token::Prev => Instruction::Prev,
             Token::Print => Instruction::Print,
             Token::Read => Instruction::Read,
-            _ => panic!("attempt to convert Token into Instruction"),
+            loop_token => panic!("attempt to convert {:?} into Instruction", loop_token),
         }
     }
 }
 
-#[allow(dead_code)]
 impl Instruction {
-    #[allow(dead_code)]
-    pub fn get_loop(&self) -> Option<&Vec<Self>> {
+    pub fn get_inner_mut(&mut self) -> Option<&mut Vec<Self>> {
         match self {
             Instruction::Loop(x) => Some(x),
             _ => None,
         }
     }
+    pub fn get_last_deepest_mut(&mut self, nesting: usize) -> &mut Self {
+        let mut instruction_ref: &mut Instruction = self;
 
-    pub fn get_mut_loop(&mut self) -> Option<&mut Vec<Self>> {
-        match self {
-            Instruction::Loop(x) => Some(x),
-            _ => None,
+        for _ in 1..nesting {
+            instruction_ref = instruction_ref
+                .get_inner_mut()
+                .unwrap()
+                .last_mut()
+                .unwrap();
         }
+
+        instruction_ref
     }
 
     pub fn parse(tokens: &[Token]) -> Result<Vec<Instruction>, ParseError> {
         let mut instructions: Vec<Instruction> = vec![];
 
         let mut nesting = 0;
-
-        macro_rules! get_last_deepest {
-            () => {{
-                let mut instruction_ref: &mut Instruction = instructions.last_mut().unwrap();
-
-                for _ in 1..nesting {
-                    instruction_ref = instruction_ref.get_mut_loop().unwrap().last_mut().unwrap();
-                }
-
-                instruction_ref
-            }};
-        }
-
         for token in tokens.iter().copied() {
             match token {
                 Token::LoopStart => {
                     if nesting > 0 {
-                        get_last_deepest!()
-                            .get_mut_loop()
+                        instructions
+                            .last_mut()
+                            .unwrap()
+                            .get_last_deepest_mut(nesting)
+                            .get_inner_mut()
                             .unwrap()
                             .push(Instruction::Loop(vec![]));
                     } else {
@@ -90,8 +84,11 @@ impl Instruction {
                 }
                 other => {
                     if nesting > 0 {
-                        get_last_deepest!()
-                            .get_mut_loop()
+                        instructions
+                            .last_mut()
+                            .unwrap()
+                            .get_last_deepest_mut(nesting)
+                            .get_inner_mut()
                             .unwrap()
                             .push(other.into());
                     } else {
@@ -126,8 +123,8 @@ impl Instruction {
                         }
                     }
                 }
-                Instruction::Inc => bf.tape[bf.pointer] += Wrapping(1),
-                Instruction::Dec => bf.tape[bf.pointer] -= Wrapping(1),
+                Instruction::Inc => bf.tape[bf.pointer] += 1,
+                Instruction::Dec => bf.tape[bf.pointer] -= 1,
                 Instruction::Next => bf.next(),
                 Instruction::Prev => bf.prev(),
                 Instruction::Print => {

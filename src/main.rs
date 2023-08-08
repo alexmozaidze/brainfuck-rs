@@ -15,14 +15,12 @@ use std::{
 use token::Token;
 
 fn read_until_eof(handle: &Stdin, buffer: &mut String) -> Result<()> {
-    const EOF: usize = 0;
-
     loop {
         let input_length = handle
             .read_line(&mut *buffer)
             .wrap_err("unable to read from stdin")?;
 
-        if input_length == EOF {
+        if input_length == 0 {
             break;
         }
     }
