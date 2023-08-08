@@ -58,7 +58,7 @@ fn main() -> Result<()> {
         .arg(
             Arg::new("input")
                 .value_name("FILE")
-                .help("Input Brainfuck program to interpret")
+                .help("Brainfuck program to run")
                 .value_parser(value_parser!(PathBuf)),
         )
         .arg(
@@ -66,7 +66,7 @@ fn main() -> Result<()> {
                 .short('t')
                 .long("tape-length")
                 .value_name("BYTES")
-                .help("Initial tape size")
+                .help("Tape length")
                 .value_parser(value_parser!(usize))
                 .default_value("30000"),
         )
@@ -75,7 +75,7 @@ fn main() -> Result<()> {
                 .short('f')
                 .long("flush")
                 .value_name("BOOL")
-                .help("Wether to flush the output or not")
+                .help("Flush the buffer on every print")
                 .value_parser(value_parser!(bool))
                 .default_value("true"),
         )
