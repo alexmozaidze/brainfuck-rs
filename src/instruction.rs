@@ -1,12 +1,6 @@
-use std::io;
-use std::{
-    io::{Read, Write},
-    num::Wrapping,
-};
-
 use thiserror::Error;
 
-use crate::{brainfuck::Brainfuck, token::Token};
+use crate::token::Token;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Instruction {
@@ -103,52 +97,6 @@ impl Instruction {
         }
 
         Ok(instructions)
-    }
-
-    pub fn run(bf: &mut Brainfuck, instruction: &Instruction, should_flush: bool) {
-        let mut stdin = io::stdin();
-        let mut stdout = io::stdout();
-
-        let mut stack: Vec<&Instruction> = vec![instruction];
-
-        while let Some(current_instruction) = stack.pop() {
-            match current_instruction {
-                Instruction::Loop(inner) => {
-                    if bf.tape[bf.pointer].0 != 0 {
-                        // NOTE: since we're executing in reverse order, we must push in reverse too
-                        stack.push(current_instruction);
-
-                        for inner_instruction in inner.iter().rev() {
-                            stack.push(inner_instruction);
-                        }
-                    }
-                }
-                Instruction::Inc => bf.tape[bf.pointer] += 1,
-                Instruction::Dec => bf.tape[bf.pointer] -= 1,
-                Instruction::Next => bf.next(),
-                Instruction::Prev => bf.prev(),
-                Instruction::Print => {
-                    let output = bf.tape[bf.pointer].0;
-
-                    stdout.write_all(&[output]).unwrap();
-
-                    if should_flush {
-                        stdout.flush().unwrap();
-                    }
-                }
-                Instruction::Read => {
-                    if !should_flush {
-                        stdout.flush().unwrap();
-                    }
-
-                    let mut input_char: [u8; 1] = [0];
-
-                    let _ = stdin.read_exact(&mut input_char);
-
-                    bf.tape[bf.pointer] = Wrapping(input_char[0]);
-                }
-            }
-        }
     }
 }
 

@@ -103,7 +103,7 @@ fn main() -> Result<()> {
     let should_flush = *matches.get_one::<bool>("should-flush").unwrap();
 
     for instruction in instructions {
-        Instruction::run(&mut bf, &instruction, should_flush);
+        bf.run(&instruction, should_flush);
     }
 
     println!();
