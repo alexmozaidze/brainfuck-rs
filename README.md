@@ -16,8 +16,6 @@ It doesn't use recursion internally, it uses a stack, which entirely avoids stac
 
 It doesn't use `unsafe` keyword. This pretty much means that it is unlikely to cause undefined behaviour.
 
-> NOTE: This has nothing to do with panics. The program may still panic, but it is unlikely to do so.
-
 ### configurability
 
 You can specify the desired length of the tape. By default, the tape length is 30000, but you may set it to anything ranging from 1 all the way to `usize::MAX`.
