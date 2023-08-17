@@ -1,5 +1,5 @@
 use std::{
-    io::{Read, Write},
+    io::{Read, Write, ErrorKind},
     num::Wrapping,
 };
 
@@ -124,7 +124,11 @@ impl Engine {
 
                     let mut input_char: [u8; 1] = [0];
 
-                    let _ = stdin.read_exact(&mut input_char);
+                    match stdin.read_exact(&mut input_char) {
+                        Ok(_) => {},
+                        Err(e) if e.kind() == ErrorKind::UnexpectedEof => return,
+                        Err(e) => panic!("unexpected error: {e}"),
+                    }
 
                     self.tape[self.pointer] = Wrapping(input_char[0]);
                 }
