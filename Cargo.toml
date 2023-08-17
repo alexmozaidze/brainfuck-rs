@@ -1,13 +1,25 @@
 [package]
 name = "brainfuck-rs"
 description = "A fast Brainfuck interpreter written in Rust."
-version = "1.1.0"
+version = "0.1.0"
 edition = "2021"
+
+[[bin]]
+name = "brainfuck-rs"
+path = "src/main.rs"
+doc = false
+
+[lib]
+name = "brainfuck_rs"
+path = "src/lib/lib.rs"
 
 [dependencies]
 clap = { version = "4.3.15", features = ["cargo"] }
 color-eyre = "0.6.2"
 thiserror = "1.0.44"
+
+[dev-dependencies]
+lazy_static = "1.4.0"
 
 [profile.release]
 lto = true

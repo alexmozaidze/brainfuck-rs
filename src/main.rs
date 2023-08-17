@@ -1,18 +1,12 @@
-mod brainfuck;
-mod instruction;
-mod token;
-
-use brainfuck::Brainfuck;
+use brainfuck_rs::{engine::Engine, instruction::Instruction, token::Token};
 use clap::{command, value_parser, Arg, ArgMatches};
 use color_eyre::eyre::{eyre, Context, Result};
-use instruction::Instruction;
 use std::{
     fs,
     io::{self, Stdin},
     num::Wrapping,
     path::PathBuf,
 };
-use token::Token;
 
 fn read_until_eof(handle: &Stdin, buffer: &mut String) -> Result<()> {
     loop {
@@ -81,9 +75,10 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
-    let mut bf = Brainfuck {
+    let mut bf = Engine {
         pointer: 0,
         tape: vec![Wrapping(0); *matches.get_one::<usize>("tape-length").unwrap()],
+        should_flush: *matches.get_one::<bool>("should-flush").unwrap(),
     };
 
     let code: String = get_program(&matches)?;
@@ -91,19 +86,16 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let tokens: Vec<Token> = Token::tokenize(&code).collect();
-
-    let instructions: Vec<Instruction> = match Instruction::parse(&tokens) {
+    let instructions = match Instruction::parse(Token::tokenize(&code)) {
         Ok(ok) => ok,
         Err(error) => return Err(eyre!("error while parsing").wrap_err(error)),
     };
 
-    drop(tokens);
-
-    let should_flush = *matches.get_one::<bool>("should-flush").unwrap();
+    let mut stdin = io::stdin();
+    let mut stdout = io::stdout();
 
     for instruction in instructions {
-        bf.run(&instruction, should_flush);
+        bf.run(&instruction, &mut stdin, &mut stdout);
     }
 
     println!();
