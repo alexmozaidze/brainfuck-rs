@@ -17,11 +17,12 @@
 //! #   }
 //! # }
 //! # use brainfuck_rs::{
-//! #   engine::Engine,
+//! #   engine::{Engine, RuntimeSettings},
 //! #   token::Token,
 //! #   instruction::Instruction,
 //! # };
 //! let mut bf = Engine::default();
+//! let settings = RuntimeSettings::default();
 //!
 //! let code = "+>>>>>>>>>>-[,+[-.----------[[-]>]<->]<]";
 //!
@@ -31,9 +32,7 @@
 //! let mut output = io::stdout();
 //!
 //! # return;
-//! for instruction in instructions {
-//!     bf.run(&instruction, &mut input, &mut output);
-//! }
+//! bf.run(&instructions, &mut input, &mut output, settings);
 //! ```
 //!
 //! But you can also redirect the input and output to any buffer that implements [`std::io::Read`]
@@ -60,12 +59,12 @@
     clippy::if_then_some_else_none,
     clippy::derive_partial_eq_without_eq,
     clippy::default_trait_access,
-    clippy::cloned_instead_of_copied,
+    clippy::cloned_instead_of_copied
 )]
 
 /// The interpreter that can run Brainfuck programs.
 pub mod engine;
-/// Tokens used to generate an AST.
-pub mod token;
 /// An AST that is fed to [`Engine`](`crate::engine::Engine`) in order to run Brainfuck programs.
 pub mod instruction;
+/// Tokens used to generate an AST.
+pub mod token;

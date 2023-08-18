@@ -123,11 +123,13 @@ impl Instruction {
     }
 }
 
-/// An error that could be created if there is something wrong at a parsing stage.
+/// An error that could be created if there is something wrong at the parsing stage.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum ParseError {
+    /// Could not find match for `[`
     #[error("could not find match for `[`")]
     UnmatchedLoopStart,
+    /// Could not find match for `]`
     #[error("could not find match for `]`")]
     UnmatchedLoopEnd,
 }

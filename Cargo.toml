@@ -16,6 +16,7 @@ path = "src/lib/lib.rs"
 [dependencies]
 clap = { version = "4.3.15", features = ["cargo"] }
 color-eyre = "0.6.2"
+fs-err = "2.9.0"
 thiserror = "1.0.44"
 
 [dev-dependencies]

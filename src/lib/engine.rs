@@ -1,5 +1,5 @@
 use std::{
-    io::{Read, Write, ErrorKind},
+    io::{ErrorKind, Read, Write},
     num::Wrapping,
 };
 
@@ -11,8 +11,6 @@ pub struct Engine {
     pub pointer: usize,
     /// The tape that contains all the cells.
     pub tape: Vec<Wrapping<u8>>,
-    /// If `true`, the output is flushed on every print instruction, otherwise the output is buffered.
-    pub should_flush: bool,
 }
 
 impl Engine {
@@ -34,14 +32,12 @@ impl Engine {
         }
     }
 
-    /// Runs a Brainfuck instruction.
+    /// Run Brainfuck instructions.
     ///
     /// # Usage
     ///
-    /// Chances are, you most likely want to run an instruction *sequence*, in that case, you simply
-    /// iterate over instructions and run them like so:
-    ///
     /// ```
+    /// # // HACK: trying to get stdio in test environment hangs tests
     /// # mod io {
     /// #   use std::io::{BufReader, BufWriter};
     /// #   pub fn stdin() -> BufReader<&'static [u8]> {
@@ -53,10 +49,11 @@ impl Engine {
     /// # }
     /// # use brainfuck_rs::{
     /// #   instruction::Instruction,
-    /// #   engine::Engine,
+    /// #   engine::{Engine, RuntimeSettings},
     /// #   token::Token,
     /// # };
     /// let mut bf = Engine::default();
+    /// let settings = RuntimeSettings::default();
     ///
     /// let code = "+>>>>>>>>>>-[,+[-.----------[[-]>]<->]<]";
     /// let tokens = Token::tokenize(&code);
@@ -66,9 +63,7 @@ impl Engine {
     /// let mut output = io::stdout();
     ///
     /// # return;
-    /// for instruction in instructions {
-    ///     bf.run(&instruction, &mut input, &mut output);
-    /// }
+    /// bf.run(&instructions, &mut input, &mut output, settings);
     /// ```
     ///
     /// You can also capture program's output and specify its input into a separate buffer by
@@ -77,20 +72,22 @@ impl Engine {
     ///
     /// ```
     /// # use std::io::{BufReader, BufWriter};
-    /// # use brainfuck_rs::engine::Engine;
-    /// # let bf = Engine::default();
     /// let mut input = BufReader::new(b"Hello, World!".as_slice());
     /// let mut output = BufWriter::new(vec![]);
     /// ```
     ///
     /// You can use any buffer, as long as it implements [`std::io::Write`] and [`std::io::Read`].
-    pub fn run(
+    pub fn run<'a, I>(
         &mut self,
-        instruction: &Instruction,
+        instructions: I,
         stdin: &mut impl Read,
         stdout: &mut impl Write,
-    ) {
-        let mut stack: Vec<&Instruction> = vec![instruction];
+        settings: RuntimeSettings,
+    ) where
+        I: IntoIterator<Item = &'a Instruction>,
+        I::IntoIter: DoubleEndedIterator,
+    {
+        let mut stack: Vec<&Instruction> = instructions.into_iter().rev().collect();
 
         while let Some(current_instruction) = stack.pop() {
             match current_instruction {
@@ -113,20 +110,24 @@ impl Engine {
 
                     stdout.write_all(&[output]).unwrap();
 
-                    if self.should_flush {
+                    if settings.should_flush {
                         stdout.flush().unwrap();
                     }
                 }
                 Instruction::Read => {
-                    if !self.should_flush {
+                    if !settings.should_flush {
                         stdout.flush().unwrap();
                     }
 
                     let mut input_char: [u8; 1] = [0];
 
                     match stdin.read_exact(&mut input_char) {
-                        Ok(_) => {},
-                        Err(e) if e.kind() == ErrorKind::UnexpectedEof => return,
+                        Ok(_) => {}
+                        Err(e) if settings.quit_on_eof && e.kind() == ErrorKind::UnexpectedEof => {
+                            return
+                        }
+                        Err(e) if !settings.quit_on_eof && e.kind() == ErrorKind::UnexpectedEof => {
+                        }
                         Err(e) => panic!("unexpected error: {e}"),
                     }
 
@@ -146,7 +147,6 @@ impl Default for Engine {
     /// Engine {
     ///     pointer: 0,
     ///     tape: vec![Wrapping(0); 30_000],
-    ///     should_flush: true,
     /// }
     /// # ;
     /// ```
@@ -154,7 +154,36 @@ impl Default for Engine {
         Self {
             pointer: 0,
             tape: vec![Wrapping(0); 30_000],
+        }
+    }
+}
+
+/// Settings that determine how interpreter should behave.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RuntimeSettings {
+    /// If `true`, the output is flushed on every print instruction, otherwise the output is buffered.
+    pub should_flush: bool,
+    /// Stop execution on EOF.
+    ///
+    /// Particularly usefull for environments with less control, like piped data and input buffers.
+    pub quit_on_eof: bool,
+}
+
+impl Default for RuntimeSettings {
+    /// Creates a new `RuntimeSettings` with default values:
+    ///
+    /// ```
+    /// # use brainfuck_rs::engine::RuntimeSettings;
+    /// RuntimeSettings {
+    ///     should_flush: true,
+    ///     quit_on_eof: false,
+    /// }
+    /// # ;
+    /// ```
+    fn default() -> Self {
+        Self {
             should_flush: true,
+            quit_on_eof: false,
         }
     }
 }
@@ -168,11 +197,12 @@ mod tests {
 
     use super::*;
 
-    const HELLO_WORLD: &str = include_str!("../../brainfuck-programs/hello-world.b");
+    const HELLO_WORLD: &str = include_str!("../../examples/brainfuck-programs/hello-world.b");
 
     #[test]
     fn non_stdout_buffer() {
         let mut bf = Engine::default();
+        let settings = RuntimeSettings::default();
 
         let mut input = BufReader::new(<&[u8]>::default());
         let mut output = BufWriter::new(vec![]);
@@ -180,9 +210,7 @@ mod tests {
         let tokens = Token::tokenize(HELLO_WORLD);
         let instructions = Instruction::parse(tokens).unwrap();
 
-        for instruction in &instructions {
-            bf.run(instruction, &mut input, &mut output);
-        }
+        bf.run(&instructions, &mut input, &mut output, settings);
 
         assert_eq!(
             "Hello World!\n",
@@ -193,6 +221,7 @@ mod tests {
     #[test]
     fn non_stdin_buffer() {
         let mut bf = Engine::default();
+        let settings = RuntimeSettings::default();
 
         let mut input = BufReader::new(b"Hello, World!".as_slice());
         let mut output = BufWriter::new(vec![]);
@@ -200,9 +229,7 @@ mod tests {
         let tokens = Token::tokenize(&",.,.,.,.,.,.,.,.,.,.,.,.,.");
         let instructions = Instruction::parse(tokens).unwrap();
 
-        for instruction in &instructions {
-            bf.run(instruction, &mut input, &mut output);
-        }
+        bf.run(&instructions, &mut input, &mut output, settings);
 
         assert_eq!(
             "Hello, World!",

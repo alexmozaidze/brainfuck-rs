@@ -22,15 +22,15 @@ pub enum Token {
 impl Token {
     /// Tokenizes an input string, returning an iterator of tokens.
     pub fn tokenize(code: &str) -> impl Iterator<Item = Self> + '_ {
-        code.bytes().filter_map(|ch| match ch {
-            b'+' => Some(Self::Inc),
-            b'-' => Some(Self::Dec),
-            b'>' => Some(Self::Next),
-            b'<' => Some(Self::Prev),
-            b'.' => Some(Self::Print),
-            b',' => Some(Self::Read),
-            b'[' => Some(Self::LoopStart),
-            b']' => Some(Self::LoopEnd),
+        code.chars().filter_map(|ch| match ch {
+            '+' => Some(Self::Inc),
+            '-' => Some(Self::Dec),
+            '>' => Some(Self::Next),
+            '<' => Some(Self::Prev),
+            '.' => Some(Self::Print),
+            ',' => Some(Self::Read),
+            '[' => Some(Self::LoopStart),
+            ']' => Some(Self::LoopEnd),
             _ => None,
         })
     }
