@@ -15,6 +15,9 @@ use std::{
 fn main() -> Result<()> {
     color_eyre::install()?;
 
+    // HACK: Tricking compiler into rebuilding after Cargo.toml changes
+    let _ = include_str!("../Cargo.toml");
+
     let matches = command!()
         .arg(
             Arg::new("input")
