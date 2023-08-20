@@ -43,24 +43,26 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
+    let tape_length = *matches.get_one::<usize>("tape-length").unwrap();
+    let should_flush = *matches.get_one::<bool>("should-flush").unwrap();
+    let input_file_path = matches
+        .get_one::<PathBuf>("input")
+        .map(PathBuf::as_path)
+        .unwrap();
+
     let mut stdin = io::stdin();
     let mut stdout = io::stdout();
 
     let mut bf = Engine {
         pointer: 0,
-        tape: vec![Wrapping(0); *matches.get_one::<usize>("tape-length").unwrap()],
+        tape: vec![Wrapping(0); tape_length],
     };
     let settings = RuntimeSettings {
-        should_flush: *matches.get_one::<bool>("should-flush").unwrap(),
+        should_flush,
         quit_on_eof: !stdin.is_terminal(),
     };
 
-    let code = fs::read_to_string(
-        matches
-            .get_one::<PathBuf>("input")
-            .map(PathBuf::as_path)
-            .unwrap(),
-    )?;
+    let code = fs::read_to_string(input_file_path)?;
 
     let instructions = Instruction::parse(Token::tokenize(&code))?;
 
