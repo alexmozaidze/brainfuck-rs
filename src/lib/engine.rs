@@ -193,11 +193,17 @@ mod tests {
     use std::io::{BufReader, BufWriter};
     use std::str;
 
+    use lazy_static::lazy_static;
+
     use crate::token::Token;
+    use crate::utils::StripShebang;
 
     use super::*;
 
-    const HELLO_WORLD: &str = include_str!("../../examples/brainfuck-programs/hello-world.b");
+    lazy_static! {
+        static ref HELLO_WORLD: &'static str = include_str!("../../examples/brainfuck-programs/hello-world.b").strip_shebang();
+        static ref ROT13: &'static str = include_str!("../../examples/brainfuck-programs/rot13.b").strip_shebang();
+    }
 
     #[test]
     fn non_stdout_buffer() {
@@ -207,7 +213,7 @@ mod tests {
         let mut input = BufReader::new(<&[u8]>::default());
         let mut output = BufWriter::new(vec![]);
 
-        let tokens = Token::tokenize(HELLO_WORLD);
+        let tokens = Token::tokenize(&HELLO_WORLD);
         let instructions = Instruction::parse(tokens).unwrap();
 
         bf.run(&instructions, &mut input, &mut output, settings);
@@ -221,18 +227,21 @@ mod tests {
     #[test]
     fn non_stdin_buffer() {
         let mut bf = Engine::default();
-        let settings = RuntimeSettings::default();
+        let settings = RuntimeSettings {
+            quit_on_eof: true,
+            ..Default::default()
+        };
 
         let mut input = BufReader::new(b"Hello, World!".as_slice());
         let mut output = BufWriter::new(vec![]);
 
-        let tokens = Token::tokenize(&",.,.,.,.,.,.,.,.,.,.,.,.,.");
+        let tokens = Token::tokenize(&ROT13);
         let instructions = Instruction::parse(tokens).unwrap();
 
         bf.run(&instructions, &mut input, &mut output, settings);
 
         assert_eq!(
-            "Hello, World!",
+            "Uryyb, Jbeyq!",
             str::from_utf8(output.into_inner().unwrap().as_slice()).unwrap()
         );
     }

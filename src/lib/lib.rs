@@ -68,3 +68,5 @@ pub mod engine;
 pub mod instruction;
 /// Tokens used to generate an AST.
 pub mod token;
+/// Misc utilities
+pub mod utils;

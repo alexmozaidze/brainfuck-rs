@@ -2,6 +2,7 @@ use brainfuck_rs::{
     engine::{Engine, RuntimeSettings},
     instruction::Instruction,
     token::Token,
+    utils::StripShebang,
 };
 use clap::{command, value_parser, Arg};
 use color_eyre::eyre::Result;
@@ -67,7 +68,7 @@ fn main() -> Result<()> {
 
     let code = fs::read_to_string(input_file_path)?;
 
-    let instructions = Instruction::parse(Token::tokenize(&code))?;
+    let instructions = Instruction::parse(Token::tokenize(code.strip_shebang()))?;
 
     bf.run(&instructions, &mut stdin, &mut stdout, settings);
 

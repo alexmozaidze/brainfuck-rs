@@ -8,7 +8,7 @@ use std::{
 use brainfuck_rs::{
     engine::{Engine, RuntimeSettings},
     instruction::Instruction,
-    token::Token,
+    token::Token, utils::StripShebang,
 };
 
 const ROT13: &str = include_str!("brainfuck-programs/rot13.b");
@@ -22,7 +22,7 @@ fn main() {
         quit_on_eof: true,
     };
 
-    let instructions = Instruction::parse(Token::tokenize(ROT13)).unwrap();
+    let instructions = Instruction::parse(Token::tokenize(ROT13.strip_shebang())).unwrap();
 
     let input_string = b"Hello, World!\n";
     let mut input = BufReader::new(input_string.as_slice());
