@@ -37,6 +37,16 @@ fn main() -> Result<()> {
                 .default_value("30000"),
         )
         .arg(
+            Arg::new("quit-on-eof")
+                .short('q')
+                .long("quit-on-eof")
+                .value_name("BOOL")
+                .help(
+                    "Quit when EOF is encountered. E.g. after Ctrl-D or after the piped data ends.",
+                )
+                .value_parser(value_parser!(bool)),
+        )
+        .arg(
             Arg::new("should-flush")
                 .short('f')
                 .long("flush")
@@ -47,29 +57,35 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
+    let mut stdin = io::stdin();
+    let mut stdout = io::stdout();
+
     let tape_length = *matches.get_one::<usize>("tape-length").unwrap();
     let should_flush = *matches.get_one::<bool>("should-flush").unwrap();
+    let quit_on_eof = *matches
+        .get_one::<bool>("quit-on-eof")
+        .unwrap_or(&!stdin.is_terminal());
     let input_file_path = matches
         .get_one::<PathBuf>("input")
         .map(PathBuf::as_path)
         .unwrap();
 
-    let mut stdin = io::stdin();
-    let mut stdout = io::stdout();
-
     let mut bf = Engine {
         pointer: 0,
         tape: vec![Wrapping(0); tape_length],
     };
+
     let settings = RuntimeSettings {
         should_flush,
-        quit_on_eof: !stdin.is_terminal(),
+        quit_on_eof,
     };
 
     let code = fs::read_to_string(input_file_path)?;
 
     let instructions = Instruction::parse(Token::tokenize(code.strip_shebang()))?;
 
+    // NOTE: It may error if the user piped our output into a program that doesn't read stdin, but
+    // we don't care (like a good programmer)
     let _ = bf.run(&instructions, &mut stdin, &mut stdout, settings);
 
     Ok(())
