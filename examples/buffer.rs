@@ -8,7 +8,8 @@ use std::{
 use brainfuck_rs::{
     engine::{Engine, RuntimeSettings},
     instruction::Instruction,
-    token::Token, utils::StripShebang,
+    token::Token,
+    utils::StripShebang,
 };
 
 const ROT13: &str = include_str!("brainfuck-programs/rot13.b");
@@ -28,7 +29,8 @@ fn main() {
     let mut input = BufReader::new(input_string.as_slice());
     let mut output = BufWriter::new(vec![]);
 
-    bf.run(&instructions, &mut input, &mut output, settings);
+    bf.run(&instructions, &mut input, &mut output, settings)
+        .unwrap();
 
     let input = str::from_utf8(input_string).unwrap().trim();
     let output = str::from_utf8(output.get_ref()).unwrap().trim();

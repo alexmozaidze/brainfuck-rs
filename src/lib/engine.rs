@@ -1,5 +1,5 @@
 use std::{
-    io::{ErrorKind, Read, Write},
+    io::{self, ErrorKind, Read, Write},
     num::Wrapping,
 };
 
@@ -77,13 +77,19 @@ impl Engine {
     /// ```
     ///
     /// You can use any buffer, as long as it implements [`std::io::Write`] and [`std::io::Read`].
+    ///
+    /// # Errors
+    ///
+    /// In case of an IO error, it returns [`io::Error`] without continuing function execution.
+    #[deny(clippy::unwrap_in_result, clippy::panic_in_result_fn)]
     pub fn run<'a, I>(
         &mut self,
         instructions: I,
         stdin: &mut impl Read,
         stdout: &mut impl Write,
         settings: RuntimeSettings,
-    ) where
+    ) -> Result<(), io::Error>
+    where
         I: IntoIterator<Item = &'a Instruction>,
         I::IntoIter: DoubleEndedIterator,
     {
@@ -108,15 +114,15 @@ impl Engine {
                 Instruction::Print => {
                     let output = self.tape[self.pointer].0;
 
-                    stdout.write_all(&[output]).unwrap();
+                    stdout.write_all(&[output])?;
 
                     if settings.should_flush {
-                        stdout.flush().unwrap();
+                        stdout.flush()?;
                     }
                 }
                 Instruction::Read => {
                     if !settings.should_flush {
-                        stdout.flush().unwrap();
+                        stdout.flush()?;
                     }
 
                     let mut input_char: [u8; 1] = [0];
@@ -124,17 +130,19 @@ impl Engine {
                     match stdin.read_exact(&mut input_char) {
                         Ok(_) => {}
                         Err(e) if settings.quit_on_eof && e.kind() == ErrorKind::UnexpectedEof => {
-                            return
+                            return Ok(());
                         }
                         Err(e) if !settings.quit_on_eof && e.kind() == ErrorKind::UnexpectedEof => {
                         }
-                        Err(e) => panic!("unexpected error: {e}"),
+                        other_error => return other_error,
                     }
 
                     self.tape[self.pointer] = Wrapping(input_char[0]);
                 }
             }
         }
+
+        Ok(())
     }
 }
 
@@ -201,8 +209,10 @@ mod tests {
     use super::*;
 
     lazy_static! {
-        static ref HELLO_WORLD: &'static str = include_str!("../../examples/brainfuck-programs/hello-world.b").strip_shebang();
-        static ref ROT13: &'static str = include_str!("../../examples/brainfuck-programs/rot13.b").strip_shebang();
+        static ref HELLO_WORLD: &'static str =
+            include_str!("../../examples/brainfuck-programs/hello-world.b").strip_shebang();
+        static ref ROT13: &'static str =
+            include_str!("../../examples/brainfuck-programs/rot13.b").strip_shebang();
     }
 
     #[test]
@@ -216,7 +226,8 @@ mod tests {
         let tokens = Token::tokenize(&HELLO_WORLD);
         let instructions = Instruction::parse(tokens).unwrap();
 
-        bf.run(&instructions, &mut input, &mut output, settings);
+        bf.run(&instructions, &mut input, &mut output, settings)
+            .unwrap();
 
         assert_eq!(
             "Hello World!\n",
@@ -238,7 +249,8 @@ mod tests {
         let tokens = Token::tokenize(&ROT13);
         let instructions = Instruction::parse(tokens).unwrap();
 
-        bf.run(&instructions, &mut input, &mut output, settings);
+        bf.run(&instructions, &mut input, &mut output, settings)
+            .unwrap();
 
         assert_eq!(
             "Uryyb, Jbeyq!",

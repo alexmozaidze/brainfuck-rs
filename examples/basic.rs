@@ -20,5 +20,6 @@ fn main() {
     let mut input = io::stdin();
     let mut output = io::stdout();
 
-    bf.run(&instructions, &mut input, &mut output, settings);
+    bf.run(&instructions, &mut input, &mut output, settings)
+        .unwrap();
 }

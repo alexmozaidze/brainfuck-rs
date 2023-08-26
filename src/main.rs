@@ -8,7 +8,7 @@ use clap::{command, value_parser, Arg};
 use color_eyre::eyre::Result;
 use fs_err as fs;
 use std::{
-    io::{self, IsTerminal},
+    io::{self, IsTerminal, Write},
     num::Wrapping,
     path::PathBuf,
 };
@@ -70,9 +70,9 @@ fn main() -> Result<()> {
 
     let instructions = Instruction::parse(Token::tokenize(code.strip_shebang()))?;
 
-    bf.run(&instructions, &mut stdin, &mut stdout, settings);
+    let _ = bf.run(&instructions, &mut stdin, &mut stdout, settings);
 
-    println!();
+    let _ = stdout.write_all(b"\n");
 
     Ok(())
 }
