@@ -44,22 +44,22 @@
 //! let mut output = BufWriter::new(vec![]);
 //! ```
 #[warn(
-    clippy::use_self,
-    clippy::unnested_or_patterns,
-    clippy::unnecessary_box_returns,
-    clippy::uninlined_format_args,
-    clippy::unicode_not_nfc,
-    clippy::string_to_string,
-    clippy::string_add_assign,
-    clippy::string_add,
-    clippy::str_to_string,
-    clippy::missing_errors_doc,
-    clippy::map_unwrap_or,
-    clippy::manual_let_else,
-    clippy::if_then_some_else_none,
-    clippy::derive_partial_eq_without_eq,
-    clippy::default_trait_access,
-    clippy::cloned_instead_of_copied
+	clippy::use_self,
+	clippy::unnested_or_patterns,
+	clippy::unnecessary_box_returns,
+	clippy::uninlined_format_args,
+	clippy::unicode_not_nfc,
+	clippy::string_to_string,
+	clippy::string_add_assign,
+	clippy::string_add,
+	clippy::str_to_string,
+	clippy::missing_errors_doc,
+	clippy::map_unwrap_or,
+	clippy::manual_let_else,
+	clippy::if_then_some_else_none,
+	clippy::derive_partial_eq_without_eq,
+	clippy::default_trait_access,
+	clippy::cloned_instead_of_copied
 )]
 
 /// The interpreter that can run Brainfuck programs.

@@ -13,18 +13,18 @@
 /// let code_but_without_shebang = code.strip_shebang();
 /// ```
 pub trait StripShebang: AsRef<str> {
-    /// Strips shebang from a string, in case it exists.
-    fn strip_shebang(&self) -> &str {
-        let input = self.as_ref();
+	/// Strips shebang from a string, in case it exists.
+	fn strip_shebang(&self) -> &str {
+		let input = self.as_ref();
 
-        if !input.starts_with("#!") {
-            return input;
-        }
+		if !input.starts_with("#!") {
+			return input;
+		}
 
-        let index = input.find('\n').unwrap_or(input.len());
+		let index = input.find('\n').unwrap_or(input.len());
 
-        &input[index..]
-    }
+		&input[index..]
+	}
 }
 
 impl StripShebang for String {}
