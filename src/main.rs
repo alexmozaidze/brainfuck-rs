@@ -7,11 +7,7 @@ use brainfuck_rs::{
 use clap::{command, value_parser, Arg};
 use color_eyre::eyre::Result;
 use fs_err as fs;
-use std::{
-    io::{self, IsTerminal},
-    num::Wrapping,
-    path::PathBuf,
-};
+use std::{io, num::Wrapping, path::PathBuf};
 
 fn main() -> Result<()> {
     color_eyre::install()?;
@@ -44,7 +40,8 @@ fn main() -> Result<()> {
                 .help(
                     "Quit when EOF is encountered. E.g. after Ctrl-D or after the piped data ends.",
                 )
-                .value_parser(value_parser!(bool)),
+                .value_parser(value_parser!(bool))
+                .default_value("true"),
         )
         .arg(
             Arg::new("should-flush")
@@ -62,9 +59,7 @@ fn main() -> Result<()> {
 
     let tape_length = *matches.get_one::<usize>("tape-length").unwrap();
     let should_flush = *matches.get_one::<bool>("should-flush").unwrap();
-    let quit_on_eof = *matches
-        .get_one::<bool>("quit-on-eof")
-        .unwrap_or(&!stdin.is_terminal());
+    let quit_on_eof = *matches.get_one::<bool>("quit-on-eof").unwrap();
     let input_file_path = matches
         .get_one::<PathBuf>("input")
         .map(PathBuf::as_path)
